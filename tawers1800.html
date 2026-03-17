@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tawers 1800 Multi-Pass Technical Suite</title>
+    <style>
+        :root {
+            --primary-blue: #004a99;
+            --accent-orange: #ff6600;
+            --safety-red: #b71c1c;
+            --success-green: #2e7d32;
+            --dark-grey: #333;
+            --light-bg: #f4f7f6;
+            --white: #ffffff;
+            --border-color: #ddd;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--dark-grey);
+            background-color: var(--light-bg);
+            margin: 0;
+            padding: 0;
+            padding-bottom: 100px;
+        }
+
+        .container {
+            max-width: 950px;
+            margin: 1rem auto;
+            background: var(--white);
+            padding: 1rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+
+        header {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            padding: 1.5rem;
+            text-align: center;
+            border-bottom: 5px solid var(--accent-orange);
+            margin-bottom: 2rem;
+        }
+
+        h2 { color: var(--primary-blue); border-left: 5px solid var(--accent-orange); padding-left: 15px; margin-top: 2rem; }
+        h3 { color: var(--dark-grey); background: #f0f0f0; padding: 10px; border-radius: 4px; }
+
+        .doc-section { display: none; }
+        .active { display: block; animation: fadeIn 0.5s; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        th, td { text-align: left; padding: 9px; border: 1px solid var(--border-color); }
+        th { background-color: var(--primary-blue); color: var(--white); }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+
+        code {
+            font-family: 'Consolas', monospace;
+            font-size: 9px;
+            background: #2d2d2d;
+            color: #76ff03;
+            padding: 0rem;
+            display: block;
+            border-radius: 2px;
+            white-space: pre-wrap;
+            margin: 0rem;
+        }
+
+        .highlight-box {
+            background: #fff5f5;
+            border-left: 5px solid #FAEBD7;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        /* Fixed Navigation Buttons */
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255,255,255,0.95);
+            border-top: 2px solid var(--border-color);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            box-shadow: 0 -3px 12px rgba(0,0,0,0.1);
+        }
+
+        .nav-btn {
+            background: var(--accent-orange);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 50px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover { background: #e65c00; transform: translateY(-2px); }
+
+        .nav-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .page-indicator {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: var(--primary-blue);
+        }
+
+        .breadcrumb { font-size: 0.9rem; color: var(--accent-orange); font-weight: bold; margin-bottom: 10px; display: block; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Tawers 1800 Multi-Pass Technical Suite</h1>
+    <p>Automated Sequential<br>Pass Logic &amp; Path Memory Integration</p>
+</header>
+
+<div class="container">
+
+    <!-- ===== PAGE 1 OF 4: PROGRAM STRUCTURE & ROOT PASS SETUP ===== -->
+    <div id="doc1" class="doc-section active">
+        <span class="breadcrumb">PAGE 1 OF 4: PROGRAM STRUCTURE &amp; ROOT PASS SETUP</span>
+        <h4>This manual provides a comprehensive procedure for programming a multi-pass welding sequence with tracking memory on the Panasonic Tawers TM-1800 robotic welding system, operating under the Windows-based WG3/WGH3 controller platform. Multi-pass welding with path memory is an essential technique for managing thermal distortion on heavy-wall assemblies and thick-section joints. The process leverages Arc Tracking with Path Memory to record real-time joint deviations during the root pass, and Memory Playback combined with Multi-Pass Shift to accurately reproduce and offset the torch path for subsequent fill and cap passes.</h4>
+
+        <h2>1. Program Architecture</h2>
+        <p>A well-organized program structure is critical to maintaining repeatability and simplifying troubleshooting during multi-pass operations. The recommended architecture uses a hierarchical Main Program / Subprogram approach, where the main routine manages sequencing and pass control logic, while individual subprograms encapsulate the weld path data for each joint.</p>
+        <ul>
+            <li><strong>Main Program:</strong><br>Serves as the master controller. It orchestrates the overall welding sequence, manages pass counters, controls interpass timing, and issues calls to each weld subprogram in the correct order.</li>
+            <li><strong>Subprogram A (Weld 1):</strong><br>Contains the taught positional data (start point, intermediate waypoints, and end point) for the first weld joint. This subprogram is called multiple times &mdash; once for each pass &mdash; with different tracking and shift configurations.</li>
+            <li><strong>Subprogram B (Weld 2):</strong><br>Contains the taught positional data for the second weld joint. Like Subprogram A, it is called repeatedly across passes with modified parameters.</li>
+        </ul>
+
+        <h2>2. Root Pass Execution &amp; Trace Memory Recording</h2>
+        <h3>Core Command Logic</h3>
+        <p>The root pass is the foundational weld bead and the most critical step in the multi-pass sequence. During this pass, the Thru-Arc Sensor actively detects the weld joint by analyzing real-time current and voltage fluctuations during the weave cycle. Simultaneously, the Trace Memory Record function captures every correction and deviation that the arc sensor applies, storing the data into a designated memory file for later playback.</p>
+        <ul>
+            <li><strong>1. Open the subprogram for Weld 1</strong> on the teach pendant.</li>
+            <li><strong>2. Before the AS (Arc Start) command,</strong> insert the <strong>Trace Memory Record</strong> instruction (located under the Arc Sensor / Tracking menu). Assign this recording to a unique memory slot (e.g., Memory File 1). Each weld joint must use a distinct memory file to avoid data conflicts.</li>
+            <li><strong>3. Enable Arc Tracking (Thru-Arc Sensor ON).</strong> This activates real-time seam tracking so the robot follows the actual joint geometry during welding.</li>
+            <li><strong>4. Execute the weld path</strong> from the Arc Start (AS) to the Arc End (AE) command. The robot welds the root pass while the sensor corrects for joint misalignment, and all deviations are recorded to memory.</li>
+            <li><strong>5. Disable Trace Memory Record</strong> after the AE command to close the memory file and finalize the stored path data.</li>
+            <li><strong>6. Repeat this entire process</strong> for Weld 2 in its own subprogram, saving the tracking data to a different memory slot (e.g., Memory File 2).</li>
+        </ul>
+
+        <div class="highlight-box">
+            <strong>&#9888; Important:</strong> The Trace Memory file stores the <em>deviations</em> from the taught path, not absolute positions. This means the playback will reproduce the exact corrections the sensor applied during the root pass. If the root pass encounters an alarm and stops prematurely, the memory file will be incomplete and must not be used for subsequent passes.
+        </div>
+    </div>
+
+    <!-- ===== PAGE 2 OF 4: FILL & CAP PASSES &mdash; PLAYBACK & OFFSET ===== -->
+    <div id="doc2" class="doc-section">
+        <span class="breadcrumb">PAGE 2 OF 4: FILL &amp; CAP PASSES &mdash; PLAYBACK &amp; OFFSET</span>
+
+        <h2>1. Fill &amp; Cap Pass Strategy</h2>
+        <h3>Why Active Tracking Must Be Disabled on Subsequent Passes</h3>
+        <p>For the 2nd, 3rd, and 4th passes, active Arc Tracking must be turned <strong>OFF</strong>. This is a critical requirement. If arc tracking remains active during fill or cap passes, the sensor will attempt to track the face of the previously deposited root bead rather than the original joint seam. This invariably causes the robot to deviate from the intended weld path, resulting in lack of fusion, missed sidewall tie-in, and potential weld rejection. Instead, the controller plays back the recorded Trace Memory data and applies programmed offsets to position the torch correctly for each subsequent layer.</p>
+
+        <h2>2. Programming Subsequent Passes</h2>
+        <ul>
+            <li><strong>I. Insert the Trace Memory Play instruction</strong> in the subprogram for Pass 2 of Weld 1, referencing Memory File 1. This command instructs the controller to reproduce the exact path corrections that were captured during the root pass.</li>
+            <li><strong>II. Apply the Multi-Pass Shift or Parallel Shift:</strong>
+                <br>&bull; <em>If using Multi-Pass Software:</em> Specify the target layer/pass number within the Multi-Pass command block. The controller will automatically calculate and apply the Y-axis (lateral) and Z-axis (vertical) offsets based on the parameters stored in the Multi-Pass Condition File database.
+                <br>&bull; <em>If using Standard Shifts:</em> Manually program a coordinate shift (e.g., Shift Y: +2.0 mm, Shift Z: +3.2 mm) to reposition the torch for the second bead. This method requires the operator to calculate and enter offsets for each pass individually.</li>
+            <li><strong>III. Execute the weld path.</strong> The robot will follow the identical deviations and corrections recorded during Pass 1, but with the torch offset to the correct spatial position for the current fill or cap layer.</li>
+            <li><strong>IV. Disable the shift command and Trace Memory Playback</strong> after the AE (Arc End) command to reset the coordinate system before the next operation.</li>
+        </ul>
+
+        <h2>3. Example Pseudo-Code &mdash; Main Program Structure</h2>
+        <p>The following illustrates the recommended calling sequence as it should appear on the teach pendant. Note the interleaving of Weld 1 and Weld 2 passes, which provides natural interpass cooling time:</p>
+        <code>
+// --- PASS 1: ROOT PASS &amp; RECORD DATA ---
+CALL WELD_3 (Standard weld, no tracking memory needed)
+CALL WELD_4 (Standard weld, no tracking memory needed)
+
+CALL WELD_1_ROOT (Arc Tracking ON, Trace Memory REC File 1)
+CALL WELD_2_ROOT (Arc Tracking ON, Trace Memory REC File 2)
+
+// --- PASS 2: RECALL DATA &amp; SHIFT ---
+CALL WELD_1_PASS_2 (Trace Memory PLAY File 1, Shift Pass 2)
+CALL WELD_2_PASS_2 (Trace Memory PLAY File 2, Shift Pass 2)
+
+// --- PASS 3: RECALL DATA &amp; SHIFT ---
+CALL WELD_1_PASS_3 (Trace Memory PLAY File 1, Shift Pass 3)
+CALL WELD_2_PASS_3 (Trace Memory PLAY File 2, Shift Pass 3)
+
+// --- PASS 4: RECALL DATA &amp; SHIFT ---
+CALL WELD_1_PASS_4 (Trace Memory PLAY File 1, Shift Pass 4)
+CALL WELD_2_PASS_4 (Trace Memory PLAY File 2, Shift Pass 4)
+END
+        </code>
+
+        <div class="highlight-box">
+            <p><strong>&#128161; Pro-Tips for Panasonic Tawers</strong></p>
+            <ul>
+                <li><strong>Interpass Temperature Control:</strong> The reason the sequence alternates between Weld 1 and Weld 2 is to allow natural cooling between passes on each joint. If the workpiece remains above the specified interpass temperature when the robot returns for the next layer, insert a <code>TIMER</code> command in the Main Program between pass blocks to enforce a mandatory hold period.</li>
+                <li><strong>Weave Parameters:</strong> The weave width, frequency, and dwell times must be adjusted for each subsequent pass. Root passes typically use a narrow or no weave, while fill and cap passes require progressively wider weave patterns. Assign different weave condition files to each shifted pass to ensure proper sidewall fusion.</li>
+                <li><strong>Memory Purge on Startup:</strong> Always insert a Trace Memory Clear command at the very beginning of the Main Program. In the event of a mid-cycle stoppage and operator restart, this prevents the robot from using stale path data recorded from a previous workpiece.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ===== PAGE 3 OF 4: MULTI-PASS SOFTWARE CONFIGURATION ===== -->
+    <div id="doc3" class="doc-section">
+        <span class="breadcrumb">PAGE 3 OF 4: MULTI-PASS SOFTWARE CONFIGURATION</span>
+
+        <h2>Multi-Pass Software Option &mdash; Overview</h2>
+        <p>The Panasonic Multi-Pass software option significantly streamlines the programming of multi-layer weld sequences. Rather than requiring the operator to manually calculate and enter individual X/Y/Z coordinate shifts for every bead in every layer, the software manages all offset computations internally through a centralized database known as the <strong>Multi-Pass Condition File</strong>. The operator defines the offsets, weld parameters, and weave settings for each pass once, and the controller applies them automatically during execution.</p>
+        <p>Because this application requires welding other joints between passes (for interpass cooling), the recommended technique is to command the robot to execute <strong>one specific pass at a time</strong> from the Multi-Pass database, rather than allowing the controller to loop continuously from Pass 1 through Pass 4.</p>
+
+        <h2>1. Build Your Multi-Pass Condition File</h2>
+        <p>Before teaching any robot positions, configure the pass offset data in the controller:</p>
+        <ul>
+            <li><strong>I.</strong> Navigate to the <strong>Multi-Pass Menu</strong> on the teach pendant.</li>
+            <li><strong>II.</strong> Select an empty Multi-Pass Condition File (e.g., File No. 1 for the first weld joint).</li>
+            <li><strong>III.</strong> Set the total number of passes (e.g., 4 for a root + 2 fill + 1 cap sequence).</li>
+            <li><strong>IV.</strong> Populate the database for each pass:
+                <ul>
+                    <li><em>Pass 1 (Root):</em> Y-Shift and Z-Shift are set to 0.00 mm. Weld parameters reflect root pass conditions (lower amperage, tighter arc, narrow or no weave).</li>
+                    <li><em>Pass 2 (Fill):</em> Enter the calculated Y-shift (lateral offset) and Z-shift (vertical offset). Set the target Amps, Volts, Travel Speed, and assign the appropriate Weave Condition File for this layer.</li>
+                    <li><em>Pass 3 &amp; 4 (Cap):</em> Enter the specific Y/Z shifts and welding parameters for the upper cap layers. Cap passes typically require the widest weave width and adjusted dwell times for proper toe tie-in.</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h2>2. Program the Root Pass (Base Path &amp; Data Recording)</h2>
+        <p>The physical weld path is taught <strong>only once</strong>. This single subprogram serves as the geometric base for all subsequent passes. The Multi-Pass software and Trace Memory playback handle all repositioning.</p>
+        <ul>
+            <li><strong>I.</strong> Create a subprogram for the first joint (e.g., <strong>WELD_1_BASE</strong>).</li>
+            <li><strong>II.</strong> Teach the start point, intermediate waypoints, and end point as normal.</li>
+            <li><strong>III.</strong> Enable Arc Tracking (Thru-Arc Sensor ON) so the robot dynamically follows the actual joint during welding.</li>
+            <li><strong>IV.</strong> Enable Trace Memory Record and assign it to a file (e.g., Memory File 1) to capture all tracking deviations.</li>
+            <li><strong>V.</strong> In the Multi-Pass command block, set the execution range to <strong>Pass 1 to Pass 1</strong>. This constrains the controller to execute only the root pass parameters and prevents it from automatically advancing to subsequent layers.</li>
+        </ul>
+
+        <h2>3. Program the Fill &amp; Cap Passes (Playback &amp; Shifting)</h2>
+        <p>Rather than re-teaching positions for passes 2, 3, and 4, duplicate the base subprogram and modify the control commands:</p>
+        <ul>
+            <li><strong>I.</strong> Copy <strong>WELD_1_BASE</strong> and rename it <strong>WELD_1_PASS_2</strong>.</li>
+            <li><strong>II.</strong> Disable or delete the Arc Tracking command (Thru-Arc Sensor OFF).</li>
+            <li><strong>III.</strong> Enable Trace Memory Play and reference Memory File 1.</li>
+            <li><strong>IV.</strong> Change the Multi-Pass execution range to <strong>Pass 2 to Pass 2</strong>.</li>
+            <li><strong>V.</strong> Repeat to create <strong>WELD_1_PASS_3</strong> (Pass 3 to 3) and <strong>WELD_1_PASS_4</strong> (Pass 4 to 4).</li>
+        </ul>
+
+        <h2>4. Main Program Sequencing</h2>
+        <p>Assemble the complete cycle in the Main Program. The robot uses the same taught positions for every pass, relying on Trace Memory for joint-following accuracy and the Multi-Pass database for layer-specific offsets and weld parameters:</p>
+        <code>
+// --- WELD A &amp; B ROOT PASSES ---
+CALL WELD_1_BASE (Tracking ON, Trace Mem REC 1, Multi-Pass: 1 to 1)
+CALL WELD_2_BASE (Tracking ON, Trace Mem REC 2, Multi-Pass: 1 to 1)
+
+// --- INTERPASS COOLING / OTHER WELDS ---
+CALL WELD_3 (Standard weld)
+CALL WELD_4 (Standard weld)
+
+// --- WELD A &amp; B PASS 2 ---
+CALL WELD_1_PASS_2 (Trace Mem PLAY 1, Multi-Pass: 2 to 2)
+CALL WELD_2_PASS_2 (Trace Mem PLAY 2, Multi-Pass: 2 to 2)
+
+// --- WELD A &amp; B PASS 3 ---
+CALL WELD_1_PASS_3 (Trace Mem PLAY 1, Multi-Pass: 3 to 3)
+CALL WELD_2_PASS_3 (Trace Mem PLAY 2, Multi-Pass: 3 to 3)
+
+// --- WELD A &amp; B PASS 4 ---
+CALL WELD_1_PASS_4 (Trace Mem PLAY 1, Multi-Pass: 4 to 4)
+CALL WELD_2_PASS_4 (Trace Mem PLAY 2, Multi-Pass: 4 to 4)
+END
+        </code>
+
+        <h2>5. Offset Reference Table (1.2 mm Wire)</h2>
+        <p>The following table provides recommended starting-point offsets for a typical multi-pass V-groove joint using 1.2 mm solid wire. Actual values must be verified and fine-tuned during weld procedure qualification.</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Pass</th>
+                    <th>Y-Shift (Lateral)</th>
+                    <th>Z-Shift (Vertical)</th>
+                    <th>Purpose</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>1 (Root)</td><td>0.00 mm</td><td>0.00 mm</td><td>Master Path Record</td></tr>
+                <tr><td>2 (Fill)</td><td>0.00 mm</td><td>+3.20 mm</td><td>Core Buildup</td></tr>
+                <tr><td>3 (Cap L)</td><td>-2.50 mm</td><td>+5.80 mm</td><td>Upper Left Tie-in</td></tr>
+                <tr><td>4 (Cap R)</td><td>+2.50 mm</td><td>+5.80 mm</td><td>Upper Right Tie-in</td></tr>
+            </tbody>
+        </table>
+
+        <div class="highlight-box">
+            <strong>&#9888; CRITICAL: DATA PURGING</strong><br>
+            Always insert <code>TMPCLR [File 1]</code> and <code>TMPCLR [File 2]</code> at the very start of your Main Program. This clears any residual path memory data from a previous cycle, preventing the robot from following outdated deviation data in the event of a mid-cycle reset or operator restart.
+        </div>
+    </div>
+
+    <!-- ===== PAGE 4 OF 4: ERROR MANAGEMENT & SYSTEM VERIFICATION ===== -->
+    <div id="doc4" class="doc-section">
+        <span class="breadcrumb">PAGE 4 OF 4: ERROR MANAGEMENT &amp; SYSTEM VERIFICATION</span>
+
+        <h2>I. Common Error Codes &amp; Resolution Procedures</h2>
+        <p>The following table lists the most frequently encountered error conditions during multi-pass welding operations with Trace Memory and Multi-Pass software on the Tawers TM-1800, along with their root causes and corrective actions.</p>
+        <table>
+            <tr>
+                <th>Error Message</th>
+                <th>Root Cause</th>
+                <th>Corrective Action</th>
+            </tr>
+            <tr>
+                <td><strong>Trace Memory Overflow</strong></td>
+                <td>The weld seam length exceeds the capacity of the Trace Memory buffer. The controller cannot store deviation data for the entire path in a single memory file.</td>
+                <td>Divide the weld path into two or more shorter subprograms (e.g., WELD_1A and WELD_1B), each with its own dedicated memory file. Record and play back each segment independently.</td>
+            </tr>
+            <tr>
+                <td><strong>Data Not Found</strong></td>
+                <td>A TMPLOAD (Trace Memory Play) command was called, but no valid data exists in the referenced memory file. This typically occurs when the root pass encountered an alarm and terminated before recording was completed.</td>
+                <td>Verify that the root pass subprogram executed fully without alarms. Re-run the root pass to regenerate the Trace Memory data before attempting subsequent passes.</td>
+            </tr>
+            <tr>
+                <td><strong>Multi-Pass Range Error</strong></td>
+                <td>The calculated offset for the current pass places the torch TCP (Tool Center Point) beyond the robot&rsquo;s reachable envelope, or causes a joint limit violation (commonly J5 or J6).</td>
+                <td>Review the torch angle and work angle orientation. Adjust the robot&rsquo;s approach configuration or reduce the offset values. Check J6 rotation limits and verify that the positioner is not placing the workpiece in an unfavorable orientation.</td>
+            </tr>
+            <tr>
+                <td><strong>Arc Sensor Tracking Lost</strong></td>
+                <td>The Thru-Arc Sensor lost the joint during the root pass due to insufficient weave amplitude, incorrect sensitivity settings, or a joint gap that exceeds the sensor&rsquo;s detection range.</td>
+                <td>Increase the weave width to ensure adequate current variation across the joint. Verify the Arc Sensor sensitivity parameters (gain, dead band). Confirm that the joint gap and fit-up are within the sensor&rsquo;s operational specifications.</td>
+            </tr>
+            <tr>
+                <td><strong>Memory File Mismatch</strong></td>
+                <td>The Trace Memory Play command references a different memory file number than the one used during recording, or the file was overwritten by another weld subprogram.</td>
+                <td>Audit all subprograms to ensure each weld joint uses a unique, consistent memory file number for both recording and playback. Verify that no two joints share the same file index.</td>
+            </tr>
+        </table>
+
+        <h2>II. System Verification &amp; Prerequisites</h2>
+        <p>Before programming any multi-pass sequence with Trace Memory, confirm that the required software options are enabled on the controller. Missing options will result in grayed-out menu items or unavailable commands on the teach pendant.</p>
+        <ul>
+            <li>[Service Menu] &rarr; [Option Setting] &rarr; <strong>Thru-Arc Sensor: USED</strong><br><small>Enables real-time arc tracking and the Trace Memory Record/Play commands.</small></li>
+            <li>[Service Menu] &rarr; [Option Setting] &rarr; <strong>Multi-Pass: USED</strong><br><small>Enables the Multi-Pass Condition File database, automatic offset calculations, and per-pass parameter management.</small></li>
+        </ul>
+
+        <h2>III. Main Sequence Quick Reference</h2>
+        <p>The following condensed calling structure summarizes the complete multi-pass sequence with data management commands for rapid reference during programming:</p>
+        <code>
+10: TMPCLR [1]              // Clear Trace Memory File 1
+20: TMPCLR [2]              // Clear Trace Memory File 2
+30: CALL WELD_A_PASS_1      // Root pass, Arc Track ON, TMPSAVE [1]
+40: CALL WELD_B_PASS_1      // Root pass, Arc Track ON, TMPSAVE [2]
+50: CALL WELD_MISC_JOINTS   // Standard welds (interpass cooling)
+60: CALL WELD_A_PASS_2      // TMPLOAD [1], Multi-Pass 2 to 2
+70: CALL WELD_B_PASS_2      // TMPLOAD [2], Multi-Pass 2 to 2
+80: CALL WELD_A_PASS_3      // TMPLOAD [1], Multi-Pass 3 to 3
+90: CALL WELD_B_PASS_3      // TMPLOAD [2], Multi-Pass 3 to 3
+100: CALL WELD_A_PASS_4     // TMPLOAD [1], Multi-Pass 4 to 4
+110: CALL WELD_B_PASS_4     // TMPLOAD [2], Multi-Pass 4 to 4
+120: END
+        </code>
+
+        <h2>IV. Pre-Production Checklist</h2>
+        <p>Complete the following verification steps before committing to production welding:</p>
+        <table>
+            <tr>
+                <th>#</th>
+                <th>Verification Item</th>
+                <th>Status</th>
+            </tr>
+            <tr><td>1</td><td>Thru-Arc Sensor option confirmed <strong>USED</strong> in Service Menu</td><td>&#9744;</td></tr>
+            <tr><td>2</td><td>Multi-Pass option confirmed <strong>USED</strong> in Service Menu</td><td>&#9744;</td></tr>
+            <tr><td>3</td><td>Multi-Pass Condition File populated with correct offsets and parameters</td><td>&#9744;</td></tr>
+            <tr><td>4</td><td>TMPCLR commands present at start of Main Program</td><td>&#9744;</td></tr>
+            <tr><td>5</td><td>Each weld joint uses a unique Trace Memory file number</td><td>&#9744;</td></tr>
+            <tr><td>6</td><td>Arc Tracking is <strong>OFF</strong> in all fill/cap pass subprograms</td><td>&#9744;</td></tr>
+            <tr><td>7</td><td>Weave Condition Files assigned correctly per pass</td><td>&#9744;</td></tr>
+            <tr><td>8</td><td>Dry-run (no arc) completed to verify all pass offsets and reach</td><td>&#9744;</td></tr>
+            <tr><td>9</td><td>Root pass test weld completed with full Trace Memory recording</td><td>&#9744;</td></tr>
+            <tr><td>10</td><td>All passes test-welded and cross-sectioned for fusion verification</td><td>&#9744;</td></tr>
+        </table>
+
+        <div class="highlight-box">
+            <strong>&#128161; Final Note:</strong> Always perform a complete dry-run cycle (with arc OFF) after programming to verify that all pass offsets keep the torch within the robot&rsquo;s reachable envelope and that no joint limit violations occur. Once the dry run confirms safe motion, execute a full test weld on a sample coupon and cross-section the joint to verify sidewall fusion, bead placement, and penetration before committing to production.
+        </div>
+    </div>
+
+</div>
+
+<!-- Navigation Bar -->
+<div class="nav-bar">
+    <button id="prevBtn" class="nav-btn" onclick="goToPrev()" disabled>&larr; PREVIOUS</button>
+    <span id="pageIndicator" class="page-indicator">PAGE 1 OF 4</span>
+    <button id="nextBtn" class="nav-btn" onclick="goToNext()">NEXT &rarr;</button>
+</div>
+
+<script>
+    let current = 1;
+    const totalPages = 4;
+
+    function updateNav() {
+        document.getElementById('pageIndicator').textContent = 'PAGE ' + current + ' OF ' + totalPages;
+        document.getElementById('prevBtn').disabled = (current === 1);
+        document.getElementById('nextBtn').disabled = (current === totalPages);
+    }
+
+    function goToNext() {
+        if (current < totalPages) {
+            document.getElementById('doc' + current).classList.remove('active');
+            current++;
+            document.getElementById('doc' + current).classList.add('active');
+            window.scrollTo(0, 0);
+            updateNav();
+        }
+    }
+
+    function goToPrev() {
+        if (current > 1) {
+            document.getElementById('doc' + current).classList.remove('active');
+            current--;
+            document.getElementById('doc' + current).classList.add('active');
+            window.scrollTo(0, 0);
+            updateNav();
+        }
+    }
+
+    updateNav();
+</script>
+
+</body>
+</html>
